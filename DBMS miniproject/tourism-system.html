@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelIndia - Your Travel Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- CSS Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success { background-color: #10b981; }
+        .notification.error { background-color: #ef4444; }
+        .notification.info { background-color: #3b82f6; }
+    </style>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Mountain silhouette -->
+                            <path d="M5 25L12 15L18 20L25 12L32 18L35 25H5Z" fill="#ff6b35"/>
+                            <path d="M8 28L15 18L21 23L28 15L35 21L38 28H8Z" fill="#f7931e"/>
+                            
+                            <!-- Sun -->
+                            <circle cx="30" cy="10" r="4" fill="#FFD700"/>
+                            <path d="M30 4V6M30 14V16M36 10H34M26 10H24M33.5 6.5L32.1 7.9M27.9 12.1L26.5 13.5M33.5 13.5L32.1 12.1M27.9 7.9L26.5 6.5" stroke="#FFD700" stroke-width="1"/>
+                            
+                            <!-- Airplane -->
+                            <path d="M15 8L18 10L16 12L13 10L15 8Z" fill="#ffffff"/>
+                            <path d="M16 9L20 7L19 8L16 9Z" fill="#ffffff"/>
+                            
+                            <!-- Palm tree -->
+                            <path d="M10 25V30" stroke="#8B4513" stroke-width="2"/>
+                            <path d="M8 22C8 22 10 20 12 22M12 22C12 22 10 20 8 22M10 20C10 20 12 18 10 22M10 22C10 22 8 18 10 20" stroke="#228B22" stroke-width="1.5" fill="none"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-orange-100 bg-clip-text text-transparent">TravelIndia</h1>
+                        <p class="text-sm opacity-90 font-medium">🌟 Discover Incredible India</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                        <p class="text-sm opacity-90">Total Bookings</p>
+                        <p class="text-xl font-bold" id="totalBookings">0</p>
+                    </div>
+                    <button onclick="resetData()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                        Reset Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Search Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">🔍 Search Your Perfect Trip</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🏙️ Destination</label>
+                    <select id="searchDestination" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select Destination</option>
+                        <option value="goa">Goa</option>
+                        <option value="kerala">Kerala</option>
+                        <option value="rajasthan">Rajasthan</option>
+                        <option value="himachal">Himachal Pradesh</option>
+                        <option value="kashmir">Kashmir</option>
+                        <option value="mumbai">Mumbai</option>
+                        <option value="delhi">Delhi</option>
+                        <option value="bangalore">Bangalore</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💰 Budget (₹)</label>
+                    <select id="searchBudget" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">Any Budget</option>
+                        <option value="0-10000">₹0 - ₹10,000</option>
+                        <option value="10000-25000">₹10,000 - ₹25,000</option>
+                        <option value="25000-50000">₹25,000 - ₹50,000</option>
+                        <option value="50000-100000">₹50,000 - ₹1,00,000</option>
+                        <option value="100000+">₹1,00,000+</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📅 Travel Date</label>
+                    <input type="date" id="searchDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="searchTrips()" class="w-full gradient-bg text-white py-3 px-6 rounded-lg hover:opacity-90 transition-opacity font-medium">
+                        🔍 Search Trips
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="flex flex-wrap gap-1 bg-gray-200 p-1 rounded-lg">
+                <button onclick="showTab('destinations')" id="tab-destinations" class="tab-active px-6 py-3 rounded-md font-medium transition-all">
+                    🏖️ Destinations
+                </button>
+                <button onclick="showTab('hotels')" id="tab-hotels" class="px-6 py-3 rounded-md font-medium text-gray-600 hover:text-gray-800 transition-all">
+                    🏨 Hotels
+                </button>
+                <button onclick="showTab('packages')" id="tab-packages" class="px-6 py-3 rounded-md font-medium text-gray-600 hover:text-gray-800 transition-all">
+                    📦 Packages
+                </button>
+                <button onclick="showTab('bookings')" id="tab-bookings" class="px-6 py-3 rounded-md font-medium text-gray-600 hover:text-gray-800 transition-all">
+                    📋 My Bookings
+                </button>
+            </div>
+        </div>
+
+        <!-- Destinations Tab -->
+        <div id="content-destinations" class="tab-content">
+            <div class="mb-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">🌍 Popular Destinations in India</h3>
+            </div>
+            <div id="destinationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Destinations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Hotels Tab -->
+        <div id="content-hotels" class="tab-content hidden">
+            <div class="mb-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">🏨 Featured Hotels</h3>
+            </div>
+            <div id="hotelsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Hotels will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Packages Tab -->
+        <div id="content-packages" class="tab-content hidden">
+            <div class="mb-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">📦 Holiday Packages</h3>
+            </div>
+            <div id="packagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Packages will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="content-bookings" class="tab-content hidden">
+            <div class="mb-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">📋 My Bookings</h3>
+            </div>
+            <div id="bookingsContainer">
+                <!-- Bookings will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-semibold text-gray-800">🎯 Complete Your Booking</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-3xl">×</button>
+                </div>
+                
+                <form id="bookingForm" onsubmit="submitBooking(event)">
+                    <div id="bookingDetails" class="mb-6">
+                        <!-- Booking details will be populated here -->
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                            <input type="text" id="customerName" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                            <input type="email" id="customerEmail" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                            <input type="tel" id="customerPhone" required placeholder="+91 XXXXX XXXXX" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Travelers *</label>
+                            <select id="travelers" required onchange="calculateTotal()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                                <option value="">Select</option>
+                                <option value="1">1 Person</option>
+                                <option value="2">2 People</option>
+                                <option value="3">3 People</option>
+                                <option value="4">4 People</option>
+                                <option value="5">5 People</option>
+                                <option value="6">6+ People</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Travel Date</label>
+                            <input type="date" id="travelDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                            <input type="text" id="customerCity" placeholder="Your city" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-50 p-4 rounded-lg mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-lg font-semibold text-gray-800">Base Amount:</span>
+                            <span class="text-lg font-bold text-gray-800" id="baseAmount">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">GST (18%):</span>
+                            <span class="text-sm text-gray-600" id="gstAmount">₹0</span>
+                        </div>
+                        <div class="border-t pt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xl font-bold text-gray-800">Total Amount:</span>
+                                <span class="text-2xl font-bold text-orange-600" id="totalAmount">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeModal()" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 gradient-bg text-white py-3 px-6 rounded-lg hover:opacity-90 transition-opacity">
+                            💳 Confirm Booking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Code -->
+    <script>
+        // ===== DATA SECTION =====
+        const destinations = [
+            { id: 1, name: 'Goa', price: 15000, rating: 4.5, image: '🏖️', description: 'Beautiful beaches, vibrant nightlife, and Portuguese heritage', category: 'beach', state: 'Goa' },
+            { id: 2, name: 'Kerala Backwaters', price: 20000, rating: 4.7, image: '🛶', description: 'Serene backwaters, houseboats, and lush greenery', category: 'nature', state: 'Kerala' },
+            { id: 3, name: 'Rajasthan Royal Tour', price: 35000, rating: 4.6, image: '🏰', description: 'Majestic palaces, desert safaris, and rich culture', category: 'heritage', state: 'Rajasthan' },
+            { id: 4, name: 'Himachal Hill Stations', price: 18000, rating: 4.4, image: '🏔️', description: 'Snow-capped mountains, adventure sports, and cool climate', category: 'hills', state: 'Himachal Pradesh' },
+            { id: 5, name: 'Kashmir Paradise', price: 25000, rating: 4.8, image: '🌸', description: 'Dal Lake, Shikara rides, and breathtaking valleys', category: 'nature', state: 'Kashmir' },
+            { id: 6, name: 'Mumbai City Break', price: 12000, rating: 4.2, image: '🏙️', description: 'Bollywood, street food, and bustling city life', category: 'city', state: 'Maharashtra' }
+        ];
+
+        const hotels = [
+            { id: 1, name: 'Taj Goa Resort', location: 'Goa', price: 8000, rating: 4.8, amenities: ['Pool', 'Spa', 'Beach Access', 'Restaurant'], stars: 5 },
+            { id: 2, name: 'Kerala Houseboat', location: 'Kerala', price: 5000, rating: 4.6, amenities: ['AC', 'Meals', 'Scenic Views', 'Traditional'], stars: 4 },
+            { id: 3, name: 'Rajasthan Palace Hotel', location: 'Rajasthan', price: 12000, rating: 4.7, amenities: ['Heritage', 'Pool', 'Cultural Shows', 'Luxury'], stars: 5 },
+            { id: 4, name: 'Himachal Resort', location: 'Himachal', price: 6000, rating: 4.3, amenities: ['Mountain View', 'Bonfire', 'Adventure Sports', 'Cozy'], stars: 4 },
+            { id: 5, name: 'Kashmir Deluxe Hotel', location: 'Kashmir', price: 7000, rating: 4.5, amenities: ['Lake View', 'Garden', 'Local Cuisine', 'Comfort'], stars: 4 },
+            { id: 6, name: 'Mumbai Business Hotel', location: 'Mumbai', price: 4000, rating: 4.1, amenities: ['WiFi', 'Business Center', 'City View', 'Modern'], stars: 3 }
+        ];
+
+        const packages = [
+            { id: 1, name: 'Golden Triangle', destinations: ['Delhi', 'Agra', 'Jaipur'], duration: 6, price: 28000, description: 'Classic India tour covering Delhi, Agra (Taj Mahal), and Jaipur', includes: ['Hotels', 'Transport', 'Guide', 'Breakfast'] },
+            { id: 2, name: 'South India Explorer', destinations: ['Bangalore', 'Mysore', 'Ooty'], duration: 8, price: 32000, description: 'Explore the cultural richness of South India', includes: ['Hotels', 'Transport', 'Meals', 'Sightseeing'] },
+            { id: 3, name: 'Goa Beach Holiday', destinations: ['North Goa', 'South Goa'], duration: 5, price: 22000, description: 'Relaxing beach vacation with water sports and nightlife', includes: ['Beach Resort', 'Water Sports', 'Meals', 'Airport Transfer'] },
+            { id: 4, name: 'Himalayan Adventure', destinations: ['Manali', 'Rohtang Pass', 'Solang Valley'], duration: 7, price: 26000, description: 'Adventure-packed trip to the Himalayas', includes: ['Hotels', 'Adventure Activities', 'Transport', 'Guide'] },
+            { id: 5, name: 'Kerala God\'s Own Country', destinations: ['Kochi', 'Munnar', 'Alleppey'], duration: 6, price: 24000, description: 'Experience the beauty of Kerala backwaters and hill stations', includes: ['Houseboat', 'Hill Resort', 'Transport', 'Meals'] },
+            { id: 6, name: 'Rajasthan Heritage Tour', destinations: ['Jaipur', 'Udaipur', 'Jodhpur'], duration: 9, price: 38000, description: 'Royal palaces, forts, and desert experiences', includes: ['Heritage Hotels', 'Desert Safari', 'Cultural Shows', 'All Meals'] }
+        ];
+
+        // ===== GLOBAL VARIABLES =====
+        let bookings = JSON.parse(localStorage.getItem('travelIndia_bookings') || '[]');
+        let currentBookingItem = null;
+        let currentBookingType = '';
+        let filteredDestinations = [...destinations];
+        let filteredHotels = [...hotels];
+        let filteredPackages = [...packages];
+
+        // ===== INITIALIZATION FUNCTIONS =====
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            loadDestinations();
+            loadHotels();
+            loadPackages();
+            loadBookings();
+            updateBookingCount();
+            setDefaultDates();
+        }
+
+        function setDefaultDates() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dateString = tomorrow.toISOString().split('T')[0];
+            document.getElementById('searchDate').value = dateString;
+            document.getElementById('travelDate').value = dateString;
+        }
+
+        // ===== TAB AND SEARCH FUNCTIONS =====
+        function showTab(tabName) {
+            hideAllTabs();
+            showSelectedTab(tabName);
+            loadTabSpecificData(tabName);
+        }
+
+        function hideAllTabs() {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.remove('tab-active');
+                tab.classList.add('text-gray-600');
+            });
+        }
+
+        function showSelectedTab(tabName) {
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            activeTab.classList.add('tab-active');
+            activeTab.classList.remove('text-gray-600');
+        }
+
+        function loadTabSpecificData(tabName) {
+            if (tabName === 'bookings') {
+                loadBookings();
+            }
+        }
+
+        function searchTrips() {
+            const searchCriteria = getSearchCriteria();
+            applyFilters(searchCriteria);
+            refreshDisplays();
+            showSearchResults();
+        }
+
+        function getSearchCriteria() {
+            return {
+                destination: document.getElementById('searchDestination').value.toLowerCase(),
+                budget: document.getElementById('searchBudget').value,
+                date: document.getElementById('searchDate').value
+            };
+        }
+
+        function applyFilters(criteria) {
+            filteredDestinations = filterDestinations(criteria);
+            filteredHotels = filterHotels(criteria);
+            filteredPackages = filterPackages(criteria);
+        }
+
+        function filterDestinations(criteria) {
+            return destinations.filter(dest => {
+                const matchesDestination = !criteria.destination || 
+                    dest.name.toLowerCase().includes(criteria.destination) || 
+                    dest.state.toLowerCase().includes(criteria.destination);
+                const matchesBudget = checkBudgetMatch(dest.price, criteria.budget);
+                return matchesDestination && matchesBudget;
+            });
+        }
+
+        function filterHotels(criteria) {
+            return hotels.filter(hotel => {
+                const matchesDestination = !criteria.destination || 
+                    hotel.location.toLowerCase().includes(criteria.destination);
+                const matchesBudget = checkBudgetMatch(hotel.price, criteria.budget);
+                return matchesDestination && matchesBudget;
+            });
+        }
+
+        function filterPackages(criteria) {
+            return packages.filter(pkg => {
+                const matchesDestination = !criteria.destination || 
+                    pkg.destinations.some(d => d.toLowerCase().includes(criteria.destination));
+                const matchesBudget = checkBudgetMatch(pkg.price, criteria.budget);
+                return matchesDestination && matchesBudget;
+            });
+        }
+
+        function checkBudgetMatch(price, budget) {
+            if (!budget) return true;
+            
+            if (budget === '100000+') {
+                return price >= 100000;
+            } else {
+                const [min, max] = budget.split('-').map(Number);
+                return price >= min && price <= max;
+            }
+        }
+
+        function refreshDisplays() {
+            loadDestinations();
+            loadHotels();
+            loadPackages();
+        }
+
+        function showSearchResults() {
+            const totalResults = filteredDestinations.length + filteredHotels.length + filteredPackages.length;
+            showNotification(`🎯 Found ${totalResults} results matching your search!`, 'success');
+        }
+
+        // ===== DISPLAY FUNCTIONS =====
+        function loadDestinations() {
+            const grid = document.getElementById('destinationsGrid');
+            
+            if (filteredDestinations.length === 0) {
+                showEmptyState(grid, '🔍', 'No Destinations Found', 'Try adjusting your search criteria');
+                return;
+            }
+            
+            grid.innerHTML = filteredDestinations.map(dest => createDestinationCard(dest)).join('');
+        }
+
+        function createDestinationCard(dest) {
+            return `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                    <div class="h-48 bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center">
+                        <span class="text-6xl">${dest.image}</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-semibold text-gray-800">${dest.name}</h3>
+                            <div class="flex items-center">
+                                <span class="text-yellow-400">⭐</span>
+                                <span class="text-sm text-gray-600 ml-1">${dest.rating}</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4 text-sm">${dest.description}</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-orange-600">₹${dest.price.toLocaleString()}</span>
+                            <span class="text-sm text-gray-500">per person</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-xs rounded-full capitalize">${dest.category}</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${dest.state}</span>
+                        </div>
+                        <button onclick="bookDestination(${dest.id})" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                            🎯 Book Now
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showEmptyState(container, icon, title, message) {
+            container.innerHTML = `
+                <div class="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
+                    <span class="text-6xl mb-4 block">${icon}</span>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">${title}</h3>
+                    <p class="text-gray-600">${message}</p>
+                </div>
+            `;
+        }
+
+        function loadHotels() {
+            const grid = document.getElementById('hotelsGrid');
+            
+            if (filteredHotels.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
+                        <span class="text-6xl mb-4 block">🏨</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">No Hotels Found</h3>
+                        <p class="text-gray-600">Try adjusting your search criteria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredHotels.map(hotel => `
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">${hotel.name}</h3>
+                        <div class="flex items-center">
+                            <span class="text-yellow-400">${'⭐'.repeat(hotel.stars)}</span>
+                            <span class="ml-2 text-sm text-gray-600">${hotel.rating}</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-2">📍 ${hotel.location}</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-2xl font-bold text-green-600">₹${hotel.price.toLocaleString()}</span>
+                        <span class="text-sm text-gray-500">per night</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-4">
+                        ${hotel.amenities.map(amenity => `
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${amenity}</span>
+                        `).join('')}
+                    </div>
+                    <button onclick="bookHotel(${hotel.id})" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                        🏨 Book Hotel
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function loadPackages() {
+            const grid = document.getElementById('packagesGrid');
+            
+            if (filteredPackages.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
+                        <span class="text-6xl mb-4 block">📦</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">No Packages Found</h3>
+                        <p class="text-gray-600">Try adjusting your search criteria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredPackages.map(pkg => `
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">${pkg.name}</h3>
+                    <p class="text-gray-600 mb-4 text-sm">${pkg.description}</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-2xl font-bold text-purple-600">₹${pkg.price.toLocaleString()}</span>
+                        <span class="text-sm text-gray-500">${pkg.duration} days</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">🌍 Destinations:</p>
+                        <div class="flex flex-wrap gap-1">
+                            ${pkg.destinations.map(dest => `
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">${dest}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">✅ Includes:</p>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            ${pkg.includes.map(item => `<li>• ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <button onclick="bookPackage(${pkg.id})" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                        📦 Book Package
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function loadBookings() {
+            const container = document.getElementById('bookingsContainer');
+            
+            if (bookings.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                        <span class="text-6xl mb-4 block">📋</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">No Bookings Yet</h3>
+                        <p class="text-gray-600">Start exploring and make your first booking!</p>
+                        <button onclick="showTab('destinations')" class="mt-4 gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                            🌍 Explore Destinations
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="space-y-4">
+                    ${bookings.map(booking => `
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800">${booking.itemName}</h3>
+                                    <p class="text-sm text-gray-600">Booking ID: ${booking.bookingId}</p>
+                                    <p class="text-sm text-gray-600">Type: ${booking.type}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-orange-600">₹${booking.totalAmount.toLocaleString()}</p>
+                                    <p class="text-sm text-gray-500">${booking.travelers} travelers</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p><strong>Customer:</strong> ${booking.customerName}</p>
+                                    <p><strong>Email:</strong> ${booking.customerEmail}</p>
+                                    <p><strong>Phone:</strong> ${booking.customerPhone}</p>
+                                </div>
+                                <div>
+                                    <p><strong>Travel Date:</strong> ${booking.travelDate || 'TBD'}</p>
+                                    <p><strong>Booking Date:</strong> ${new Date(booking.bookingDate).toLocaleDateString()}</p>
+                                    <p><strong>Status:</strong> <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Confirmed</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="viewBookingDetails('${booking.bookingId}')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                                    👁️ View Details
+                                </button>
+                                <button onclick="cancelBooking('${booking.bookingId}')" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
+                                    ❌ Cancel
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ===== BOOKING FUNCTIONS =====
+        function bookDestination(destinationId) {
+            const destination = destinations.find(d => d.id === destinationId);
+            if (!destination) {
+                showNotification('❌ Destination not found!', 'error');
+                return;
+            }
+            
+            setupBooking('destination', destination);
+            showBookingModal(createDestinationBookingDetails(destination));
+        }
+
+        function bookHotel(hotelId) {
+            const hotel = hotels.find(h => h.id === hotelId);
+            if (!hotel) {
+                showNotification('❌ Hotel not found!', 'error');
+                return;
+            }
+            
+            setupBooking('hotel', hotel);
+            showBookingModal(createHotelBookingDetails(hotel));
+        }
+
+        function bookPackage(packageId) {
+            const pkg = packages.find(p => p.id === packageId);
+            if (!pkg) {
+                showNotification('❌ Package not found!', 'error');
+                return;
+            }
+            
+            setupBooking('package', pkg);
+            showBookingModal(createPackageBookingDetails(pkg));
+        }
+
+        function setupBooking(type, item) {
+            currentBookingType = type;
+            currentBookingItem = item;
+        }
+
+        function showBookingModal(detailsHTML) {
+            document.getElementById('bookingDetails').innerHTML = detailsHTML;
+            document.getElementById('bookingModal').classList.add('show');
+        }
+
+        function createDestinationBookingDetails(destination) {
+            return `
+                <div class="bg-orange-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3">🌍 Destination Booking</h4>
+                    <div class="flex items-center mb-3">
+                        <span class="text-3xl mr-3">${destination.image}</span>
+                        <div>
+                            <p class="font-medium text-gray-800 text-lg">${destination.name}</p>
+                            <p class="text-sm text-gray-600">₹${destination.price.toLocaleString()} per person</p>
+                            <p class="text-sm text-gray-500">⭐ ${destination.rating} rating</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600">${destination.description}</p>
+                </div>
+            `;
+        }
+
+        function createHotelBookingDetails(hotel) {
+            return `
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3">🏨 Hotel Booking</h4>
+                    <div class="mb-3">
+                        <p class="font-medium text-gray-800 text-lg">${hotel.name}</p>
+                        <p class="text-sm text-gray-600">📍 ${hotel.location} • ${'⭐'.repeat(hotel.stars)} ${hotel.stars} Star</p>
+                        <p class="text-sm text-gray-600">₹${hotel.price.toLocaleString()} per night • ⭐ ${hotel.rating} rating</p>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        ${hotel.amenities.map(amenity => `
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${amenity}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPackageBookingDetails(pkg) {
+            return `
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3">📦 Package Booking</h4>
+                    <div class="mb-3">
+                        <p class="font-medium text-gray-800 text-lg">${pkg.name}</p>
+                        <p class="text-sm text-gray-600">${pkg.duration} days • ₹${pkg.price.toLocaleString()} per person</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm font-medium text-gray-700 mb-2">🌍 Destinations:</p>
+                        <div class="flex flex-wrap gap-1">
+                            ${pkg.destinations.map(dest => `
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">${dest}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600">${pkg.description}</p>
+                </div>
+            `;
+        }
+
+        function calculateTotal() {
+            const travelers = parseInt(document.getElementById('travelers').value) || 0;
+            if (!currentBookingItem || travelers === 0) {
+                document.getElementById('baseAmount').textContent = '₹0';
+                document.getElementById('gstAmount').textContent = '₹0';
+                document.getElementById('totalAmount').textContent = '₹0';
+                return;
+            }
+            
+            const basePrice = currentBookingItem.price;
+            const baseAmount = basePrice * travelers;
+            const gstRate = 0.18; // 18% GST
+            const gst = baseAmount * gstRate;
+            const total = baseAmount + gst;
+            
+            document.getElementById('baseAmount').textContent = `₹${baseAmount.toLocaleString()}`;
+            document.getElementById('gstAmount').textContent = `₹${Math.round(gst).toLocaleString()}`;
+            document.getElementById('totalAmount').textContent = `₹${Math.round(total).toLocaleString()}`;
+        }
+
+        function submitBooking(event) {
+            event.preventDefault();
+            
+            const customerName = document.getElementById('customerName').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const travelers = parseInt(document.getElementById('travelers').value);
+            const travelDate = document.getElementById('travelDate').value;
+            const customerCity = document.getElementById('customerCity').value;
+            
+            const baseAmount = currentBookingItem.price * travelers;
+            const gst = baseAmount * 0.18;
+            const total = baseAmount + gst;
+            
+            const booking = {
+                bookingId: 'TI' + Date.now(),
+                type: currentBookingType,
+                itemId: currentBookingItem.id,
+                itemName: currentBookingItem.name,
+                customerName,
+                customerEmail,
+                customerPhone,
+                customerCity,
+                travelers,
+                travelDate,
+                baseAmount,
+                gstAmount: Math.round(gst),
+                totalAmount: Math.round(total),
+                bookingDate: new Date().toISOString(),
+                status: 'confirmed'
+            };
+            
+            bookings.push(booking);
+            localStorage.setItem('travelIndia_bookings', JSON.stringify(bookings));
+            
+            closeModal();
+            updateBookingCount();
+            
+            showNotification(`🎉 Booking confirmed! Your ${currentBookingType} booking for ${currentBookingItem.name} has been created. Booking ID: ${booking.bookingId}`, 'success');
+            
+            // Switch to bookings tab
+            showTab('bookings');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('show');
+            document.getElementById('bookingForm').reset();
+            document.getElementById('baseAmount').textContent = '₹0';
+            document.getElementById('gstAmount').textContent = '₹0';
+            document.getElementById('totalAmount').textContent = '₹0';
+        }
+
+        function updateBookingCount() {
+            document.getElementById('totalBookings').textContent = bookings.length;
+        }
+
+        function viewBookingDetails(bookingId) {
+            const booking = bookings.find(b => b.bookingId === bookingId);
+            if (!booking) {
+                showNotification('❌ Booking not found!', 'error');
+                return;
+            }
+            
+            const details = `🎯 BOOKING DETAILS\n\n📋 Booking ID: ${booking.bookingId}\n👤 Customer: ${booking.customerName}\n📧 Email: ${booking.customerEmail}\n📞 Phone: ${booking.customerPhone}\n🏙️ City: ${booking.customerCity || 'N/A'}\n\n🎒 Booking Information:\n📍 Item: ${booking.itemName}\n🏷️ Type: ${booking.type.toUpperCase()}\n👥 Travelers: ${booking.travelers}\n📅 Travel Date: ${booking.travelDate || 'TBD'}\n\n💰 Payment Details:\nBase Amount: ₹${booking.baseAmount.toLocaleString()}\nGST (18%): ₹${booking.gstAmount.toLocaleString()}\nTotal Amount: ₹${booking.totalAmount.toLocaleString()}\n\n📅 Booking Date: ${new Date(booking.bookingDate).toLocaleDateString()}\n✅ Status: ${booking.status.toUpperCase()}`;
+            
+            alert(details);
+        }
+
+        function cancelBooking(bookingId) {
+            const booking = bookings.find(b => b.bookingId === bookingId);
+            if (!booking) {
+                showNotification('❌ Booking not found!', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to cancel the booking for "${booking.itemName}"?\n\nBooking ID: ${booking.bookingId}\nCustomer: ${booking.customerName}\nAmount: ₹${booking.totalAmount.toLocaleString()}`)) {
+                bookings = bookings.filter(b => b.bookingId !== bookingId);
+                localStorage.setItem('travelIndia_bookings', JSON.stringify(bookings));
+                loadBookings();
+                updateBookingCount();
+                showNotification(`❌ Booking ${booking.bookingId} cancelled successfully`, 'info');
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function resetData() {
+            if (confirm('Are you sure you want to reset all data? This will clear all bookings.')) {
+                clearAllData();
+                resetFilters();
+                refreshAllDisplays();
+                showNotification('🔄 All data has been reset successfully!', 'info');
+            }
+        }
+
+        function clearAllData() {
+            bookings = [];
+            localStorage.removeItem('travelIndia_bookings');
+            filteredDestinations = [...destinations];
+            filteredHotels = [...hotels];
+            filteredPackages = [...packages];
+        }
+
+        function resetFilters() {
+            document.getElementById('searchDestination').value = '';
+            document.getElementById('searchBudget').value = '';
+        }
+
+        function refreshAllDisplays() {
+            loadDestinations();
+            loadHotels();
+            loadPackages();
+            loadBookings();
+            updateBookingCount();
+        }
+
+        function updateBookingCount() {
+            document.getElementById('totalBookings').textContent = bookings.length;
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('show');
+            document.getElementById('bookingForm').reset();
+            resetPriceDisplay();
+        }
+
+        function resetPriceDisplay() {
+            document.getElementById('baseAmount').textContent = '₹0';
+            document.getElementById('gstAmount').textContent = '₹0';
+            document.getElementById('totalAmount').textContent = '₹0';
+        }
+
+        function showNotification(message, type) {
+            const container = document.getElementById('notificationContainer');
+            const notification = createNotificationElement(message, type);
+            
+            container.appendChild(notification);
+            animateNotification(notification, container);
+        }
+
+        function createNotificationElement(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            return notification;
+        }
+
+        function animateNotification(notification, container) {
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (container.contains(notification)) {
+                        container.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96a43859540befd5',t:'MTc1NDM3NTE1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
